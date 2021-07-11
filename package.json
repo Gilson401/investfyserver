@@ -4,8 +4,23 @@
   "description": "server investfy",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server",
+    "server": "nodemon server",
+    "nodemonserver": "nodemon NODE_ENV=development  server.js"
   },
   "author": "gilson",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.4.0",
+    "jsonwebtoken": "^8.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
 }
