@@ -5,7 +5,7 @@ module.exports = (sequelize, Sequelize) => {
       name: { type: Sequelize.STRING, allowNull: false, },
     //   created_at: {  type: Sequelize.DATE, allowNull: true, },
     //   updated_at: {  type: Sequelize.DATE,  allowNull: true, },
-      password: {   type: Sequelize.STRING  }
+      password: {   type: Sequelize.STRING, allowNull: false,  }
     }
     ,
     {   // don't add the timestamp attributes (updatedAt, createdAt)
