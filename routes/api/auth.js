@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// const config = require('config');
 const { check, validationResult } = require('express-validator');
 
 const db = require("../../app/models/index");
@@ -16,7 +14,7 @@ const Op = db.Sequelize.Op;
 // @desc     Authenticate user & get token 
 // @access   Public
 router.post('/', [
-    
+    check('email', "REQUIRED_PASSWORD").exists(),
     check('password', "REQUIRED_PASSWORD").exists()
 ], async (req, res) => {
     console.log("req em post auth", req.body)
@@ -28,33 +26,26 @@ router.post('/', [
     
     const jwtSecret = process.env.JWT_SECRET
 
-    const { password, credent  } = req.body
-    
+    const { password, email  } = req.body
+    var condition = email ? { email: { [Op.iLike]: `%${email}%` } } : null;
+
     try {
-        let user = await User.findOne( { $or:[ {'email':credent}, {'cpf': credent}, {'matricula': credent} ]})
-            .select('id password email nome tipo organizacao disciplina turmasprof matricula')
-            .populate('organizacao disciplina turmasprof')
+        let user = await User.findAll({ where: condition }) 
 
         if (!user) {
 
             return res.status(404).json({ errors: [{ msg: "User não localizado" }] })
         } else {
 
-            const isMatch = await bcrypt.compare(password, user.password);
+            const isMatch = await bcrypt.compare(password, user[0].dataValues.password);
             if (!isMatch) {
                 return res.status(400).json({ errors: [{ msg: "PASSWORD_INVALID" }] });
             } else {
                 // console.log("Encontrou user", user)
                 const payload = {
-                    user: {
-                        id: user.id,
-                        name: user.nome,
-                        role: user.tipo,
-                        organizacao: user.organizacao._id,
-                        orgname: user.organizacao.name,
-                        disciplina: user.disciplina,
-                        turmasprof: user.turmasprof,
-                        matricula: user.matricula
+                    usuario: {
+                        id: user[0].dataValues.id,
+                        email: user[0].dataValues.email
                     }
                 }
                 jwt.sign(payload, jwtSecret, { expiresIn: '25 days' },

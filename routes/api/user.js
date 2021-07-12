@@ -18,75 +18,55 @@ router.get('/', async (req, res, next) => {
     var condition = email ? { email: { [Op.iLike]: `%${email}%` } } : null;
 
     try {
-     let user = await User.findAll({ where: condition }) 
-     res.json(user) 
+        let user = await User.findAll({ where: condition })
+        res.json(user)
     } catch (err) {
-      console.error("err.message", err.message)
-      res.status(500).send({ "error": 'erro em get user!' })
+        console.error("err.message", err.message)
+        res.status(500).send({ "error": 'erro em get user!' })
     }
-  })
+})
 
 
-// @route    POST /auth
-// @desc     Authenticate user & get token 
+// @route    POST /user
+// @desc     CREATE user
 // @access   Public
 router.post('/', [
-    
-    check('password', "REQUIRED_PASSWORD").exists()
-], async (req, res) => {
-    console.log("req em post auth", req.body)
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        console.log("Erro em auth post ")
-        return res.status(400).json({ errors: errors.array() })
-    }
-    
-    const jwtSecret = process.env.JWT_SECRET
-
-    const { password, credent  } = req.body
-    
+    check('email', 'email is not valid').isEmail(),
+    check('email').not().isEmpty(),
+    check('password', 'Please enter a password with 8 or more characters').isLength({ min: 8 })
+], async (req, res, next) => {
     try {
-        let user = await User.findOne( { $or:[ {'email':credent}, {'cpf': credent}, {'matricula': credent} ]})
-            .select('id password email nome tipo organizacao disciplina turmasprof matricula')
-            .populate('organizacao disciplina turmasprof')
+        let { email, password, name } = req.body
 
-        if (!user) {
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
 
-            return res.status(404).json({ errors: [{ msg: "User não localizado" }] })
+            return res.status(400).send(errors)
         } else {
 
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
-                return res.status(400).json({ errors: [{ msg: "PASSWORD_INVALID" }] });
-            } else {
-                // console.log("Encontrou user", user)
-                const payload = {
-                    user: {
-                        id: user.id,
-                        name: user.nome,
-                        role: user.tipo,
-                        organizacao: user.organizacao._id,
-                        orgname: user.organizacao.name,
-                        disciplina: user.disciplina,
-                        turmasprof: user.turmasprof,
-                        matricula: user.matricula
-                    }
-                }
-                jwt.sign(payload, jwtSecret, { expiresIn: '25 days' },
-                    (err, token) => {
-                        if (err) throw err;
-                        payload.token = token
-                        res.json(payload);
-                    }
-                );
-            }
-        }
+            let usuario = { email, password , name}
 
+            const salt = await bcrypt.genSalt(10);
+            usuario.password = await bcrypt.hash(password, salt);
+
+            await User.create(usuario)
+                .then(data => {
+                    res.send(data);
+                })
+                .catch(err => {
+                    res.status(500).send({
+                        message:
+                            err.message || "Houve um erro na criação do usuário."
+                    });
+                });
+
+        }
     } catch (err) {
         console.error(err.message)
-        res.status(500).send({ 'login err': err.message })
+        res.status(500).send({ "error": "Server Error" })
     }
-
 })
+
+
 
 module.exports = router;
