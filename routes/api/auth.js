@@ -17,22 +17,22 @@ router.post('/', [
     check('email', "REQUIRED_PASSWORD").exists(),
     check('password', "REQUIRED_PASSWORD").exists()
 ], async (req, res) => {
-    console.log("req em post auth", req.body)
+    c
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log("Erro em auth post ")
+       
         return res.status(400).json({ errors: errors.array() })
     }
-    
+
     const jwtSecret = process.env.JWT_SECRET
 
-    const { password, email  } = req.body
+    const { password, email } = req.body
     var condition = email ? { email: { [Op.iLike]: `%${email}%` } } : null;
 
     try {
-        let user = await User.findAll({ where: condition }) 
+        let user = await User.findAll({ where: condition })
 
-        if (!user) {
+        if (!user || user.length == 0) {
 
             return res.status(404).json({ errors: [{ msg: "User não localizado" }] })
         } else {
@@ -41,14 +41,19 @@ router.post('/', [
             if (!isMatch) {
                 return res.status(400).json({ errors: [{ msg: "PASSWORD_INVALID" }] });
             } else {
-                // console.log("Encontrou user", user)
+            
+                var minutesToAdd = 3;
+                var currentDate = new Date();
+                var futureDate = new Date(currentDate.getTime() + minutesToAdd * 60000);
+
                 const payload = {
                     usuario: {
                         id: user[0].dataValues.id,
-                        email: user[0].dataValues.email
+                        email: user[0].dataValues.email,
+                        validto: futureDate
                     }
                 }
-                jwt.sign(payload, jwtSecret, { expiresIn: '25 days' },
+                jwt.sign(payload, jwtSecret, { expiresIn: 50 * 5 },
                     (err, token) => {
                         if (err) throw err;
                         payload.token = token

@@ -10,16 +10,12 @@ router.get('/',  [], async (req, res, next) => {
 
     const piada = await axios.get('https://geek-jokes.sameerkumar.website/api?format=json');
 
-    res.status(200).json(piada.data.joke)
+    res.status(200).json(piada.data)
   } catch (err) {
     console.error(err.message)
     res.status(500).send({ "error": err.message })
   }
 })
-
-
-
-
 
   
 
