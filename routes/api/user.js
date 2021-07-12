@@ -10,6 +10,21 @@ const db = require("../../app/models/index");
 const User = db.user;
 const Op = db.Sequelize.Op;
 
+//https://bezkoder.com/node-express-sequelize-postgresql/
+
+
+router.get('/', async (req, res, next) => {
+    const email = req.query.email;
+    var condition = email ? { email: { [Op.iLike]: `%${email}%` } } : null;
+
+    try {
+     let user = await User.findAll({ where: condition }) 
+     res.json(user) 
+    } catch (err) {
+      console.error("err.message", err.message)
+      res.status(500).send({ "error": 'erro em get user!' })
+    }
+  })
 
 
 // @route    POST /auth

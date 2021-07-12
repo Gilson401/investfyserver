@@ -4,3 +4,4 @@ default.json
 npm-debug.log
 .DS_Store
 /*.env
+db.config.js
